@@ -84,6 +84,13 @@ class ChessCanvas {
     return this.pieces.find(this._filter(row, column, turn));
   }
 
+  hasPiece (row, column) {
+    return this.pieces.some(pieceData => 
+      pieceData.row === row &&
+      pieceData.column === column
+    )
+  }
+
   movePiece (piece, startRow, startColumn, endRow, endColumn, turn = this.turn) {
     this.pieces.splice(
       this.pieces.findIndex(
@@ -205,6 +212,7 @@ class ChessCanvas {
   }
 
   _drawMovement (pieceImage, startRow, startColumn, endRow, endColumn, captured = false) {
+    this._cleanLastMovemnt();
     const color = captured ? this.capturedColor : this.moveColor;
     this._drawSquare(color, this._getX(startColumn), this._getY(startRow));
     this._drawSquare(color, this._getX(endColumn), this._getY(endRow));
@@ -241,24 +249,17 @@ class ChessCanvas {
   }
 
   move (startRow, startColumn, endRow, endColumn) {
-    this._cleanLastMovemnt();
-
     const piece = this.findPiece(startRow, startColumn);
     if (!piece) {
       throw new Error(errors.squareEmply(startRow, startColumn));
     }
-    const pieceName = piece.piece.replace(/black|white/i, '')
-    const captured = this.capturePiece(endRow, endColumn);
-    this.assertMovement(
-      pieceName,
-      startRow,
-      startColumn,
-      endRow,
-      endColumn,
-      captured,
-      this.turn === 'white',
-      piece.isInitialPosition,
+    const possibilities = this.getPossibilities(piece);
+    
+    const movement = possibilities.find(
+      ({ row, column }) => row === endRow && column === endColumn
     );
+
+    if (!movement) throw new Error(errors.invalidMovement);
 
     this.movePiece(
       piece.piece,
@@ -271,9 +272,9 @@ class ChessCanvas {
     
     this._drawMovement(
       this._getPieceImage(piece.piece),
-      startRow, startColumn, endRow, endColumn, captured
+      startRow, startColumn, endRow, endColumn, movement.capture
     )
-
+    
     this.lastMovemnt = {
       piece: piece.piece,
       startRow,
@@ -285,52 +286,46 @@ class ChessCanvas {
     this.turn = this.getNextTurn(this.turn);
   }
 
-  assertMovement (
-    pieceName,
-    startRow,
-    startColumn,
-    endRow,
-    endColumn,
-    captured = false,
-    isWhiteTurn = true,
-    isInitialPosition = false,
-  ) {
-    const isSamePoistion = startRow === endRow && startColumn === endColumn;
-    if (isSamePoistion) throw new Error(errors.invalidMovement);
-    this.assertPosition(startRow, startColumn);
-    this.assertPosition(endRow, endColumn);
+  getPossibilities ({ piece, row, column, isInitialPosition }) {
+    const possibilities = [];
+    const addPossib = (row, column, capture = false) => {
+      possibilities.push({ row, column, capture });
+    }
 
-    switch (pieceName) {
-      case 'Pawn': {
-        const isWhiteBackMove = isWhiteTurn && startRow > endRow;
-        const isBlackBackMove = !isWhiteTurn && startRow < endRow;
-        const isDifferentColumn = startColumn !== endColumn;
-        const isWhiteDiagonalMove = isDifferentColumn && endRow !== (startRow + 1);
-        const isBlackDiagonalMove = isDifferentColumn && endRow !== (startRow - 1);
-        const isDiagonalMoveWithoutCapture = !captured && (isWhiteDiagonalMove || isBlackDiagonalMove);
-        const isMoreTwoSquares = isWhiteTurn && endRow > (startRow + 2);
-        const isWhiteTwoSquaresOutInitPos = isWhiteTurn && endRow === (startRow + 2) && !isInitialPosition;
-        const isBlackTwoSquaresOutInitPos = !isWhiteTurn && endRow === (startRow - 2) && !isInitialPosition;
-        if (
-          isWhiteBackMove ||
-          isBlackBackMove ||
-          isDiagonalMoveWithoutCapture ||
-          isMoreTwoSquares ||
-          isWhiteTwoSquaresOutInitPos ||
-          isBlackTwoSquaresOutInitPos
-        ) {
-          throw new Error(errors.pawnInvalidMovemnt)
+    switch (piece) {
+      case 'whitePawn':
+        if (!this.hasPiece(row + 1, column)) {
+          addPossib(row + 1, column);
+        }
+        if (isInitialPosition && !this.hasPiece(row + 2, column)) {
+          addPossib(row + 2, column)
+        }
+        if (this.findPiece(row + 1, column + 1,'black')) {
+          addPossib(row + 1, column + 1, true)
+        }
+        if (this.findPiece(row + 1, column - 1,'black')) {
+          addPossib(row + 1, column + 1, true)
         }
         break;
-      }
+      case 'blackPawn':
+        if (!this.hasPiece(row - 1, column)) {
+          addPossib(row - 1, column);
+        }
+        if (isInitialPosition && !this.hasPiece(row - 2, column)) {
+          addPossib(row - 2, column)
+        }
+        if (this.findPiece(row - 1, column - 1, 'white')) {
+          addPossib(row - 1, column - 1, true)
+        }
+        if (this.findPiece(row - 1, column + 1, 'white')) {
+          addPossib(row - 1, column + 1, true)
+        }
+        break;
+      default:
+        break;
     }
-  }
 
-  assertPosition (row, column) {
-    const validate = x => x > 8 || x < 1;
-
-    if (validate(row)) throw new Error(errors.invalidRow);
-    if (validate(column)) throw new Error(errors.invalidColumn);
+    return possibilities;
   }
 }
 
