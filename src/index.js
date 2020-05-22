@@ -41,6 +41,7 @@ class ChessCanvas {
     this.whiteQueenImage = null;
     this.whiteRookImage = null;
     this.lastMovemnt = {
+      piece: null,
       startRow: null,
       startColumn: null,
       endColumn: null,
@@ -212,6 +213,7 @@ class ChessCanvas {
 
   _cleanLastMovemnt () {
     const {
+      piece,
       startRow,
       startColumn,
       endRow,
@@ -224,20 +226,18 @@ class ChessCanvas {
       !endRow ||
       !endColumn
       ) return;
-    console.log(
-      this._getSquareColor(startRow, startColumn),
-      this._getX(startRow),
-      this._getX(startColumn),
-      );
     this._drawSquare(
       this._getSquareColor(startRow, startColumn),
-      this._getX(startRow),
-      this._getX(startColumn));
-    
+      this._getX(startColumn),
+      this._getY(startRow));
     this._drawSquare(
       this._getSquareColor(endRow, endColumn),
-      this._getX(endRow),
-      this._getX(endColumn));
+      this._getX(endColumn),
+      this._getY(endRow));
+    this._drawPiece(
+      this._getPieceImage(piece),
+      this._getX(endColumn),
+      this._getY(endRow));
   }
 
   move (startRow, startColumn, endRow, endColumn) {
@@ -275,6 +275,7 @@ class ChessCanvas {
     )
 
     this.lastMovemnt = {
+      piece: piece.piece,
       startRow,
       startColumn,
       endRow,
