@@ -4,16 +4,6 @@ const { createCanvas, loadImage } = require('canvas')
 const path = require('path');
 const errors = require('./errors');
 
-class Pieces extends Array {
-  get (row, column) {
-    return this.find(c => c.row === row && c.column === column);
-  }
-
-  add (piece, row, column, isInitialPosition = false) {
-    return this.push({ row, column, piece, isInitialPosition });
-  }
-}
-
 class ChessCanvas {
   constructor ({
     moveColor = '#ffff00',
@@ -23,7 +13,7 @@ class ChessCanvas {
     squareWhiteColor = '#fff',
     squareBlackColor = '#B8681A',
   } = {}) {
-    this.pieces = new Pieces();
+    this.pieces = [];
 
     this.canvas = null;
     this.canvasContext = null;
@@ -58,6 +48,14 @@ class ChessCanvas {
     return this.pieceHeigth * 8;
   }
 
+  findPiece (row, column) {
+    return this.pieces.find(c => c.row === row && c.column === column);
+  }
+
+  addPiece (piece, row, column, isInitialPosition = false) {
+    return this.pieces.push({ row, column, piece, isInitialPosition });
+  }
+
   async init () {
     this.canvas = createCanvas(this.boardWidth, this.boardHeigth);
     this.canvasContext = this.canvas.getContext('2d');
@@ -71,16 +69,16 @@ class ChessCanvas {
 
   _setInitialPieces (color, frontRow, backRow) {
     for (let column = 0; column <= 8; column++) {
-      this.pieces.add(`${color}Pawn`, frontRow, column, true);
+      this.addPiece(`${color}Pawn`, frontRow, column, true);
     }
-    this.pieces.add(`${color}Rook`, backRow, 1, true);
-    this.pieces.add(`${color}Rook`, backRow, 8, true);
-    this.pieces.add(`${color}Bishop`, backRow, 3, true);
-    this.pieces.add(`${color}Bishop`, backRow, 6, true);
-    this.pieces.add(`${color}Knight`, backRow, 2, true);
-    this.pieces.add(`${color}Knight`, backRow, 7, true);
-    this.pieces.add(`${color}King`, backRow, 4, true);
-    this.pieces.add(`${color}Queen`, backRow, 5, true);
+    this.addPiece(`${color}Rook`, backRow, 1, true);
+    this.addPiece(`${color}Rook`, backRow, 8, true);
+    this.addPiece(`${color}Bishop`, backRow, 3, true);
+    this.addPiece(`${color}Bishop`, backRow, 6, true);
+    this.addPiece(`${color}Knight`, backRow, 2, true);
+    this.addPiece(`${color}Knight`, backRow, 7, true);
+    this.addPiece(`${color}King`, backRow, 4, true);
+    this.addPiece(`${color}Queen`, backRow, 5, true);
   }
 
   _drawSquares (squares = 64) {
