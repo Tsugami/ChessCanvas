@@ -318,7 +318,7 @@ class ChessCanvas {
     this.turn = this.getNextTurn(this.turn);
   }
 
-  getPossibilities ({ piece, row, column, isInitialPosition }) {
+  getPossibilities ({ piece, row, column, isInitialPosition }, onlyAdversary = true) {
     const possibilities = [];
     const addPossib = (row, column, turn, capture) => {
       const x = this.pieces.find(pieceData => 
@@ -326,11 +326,11 @@ class ChessCanvas {
         pieceData.column === column
       )
       if (!x) return possibilities.push({ row, column })
-      if (x.piece.startsWith(turn)) return;
-      if (capture) return possibilities.push({ row, column, capture });
+      if (onlyAdversary && x.piece.startsWith(turn)) return;
+      return possibilities.push({ row, column, capture });
     }
 
-    const knightPossib = (turn) => {
+    const addKnightPossib = (turn) => {
       // L TOP
       addPossib(row + 2, column + 1, turn, true);
       addPossib(row + 2, column - 1, turn, true);
@@ -345,8 +345,8 @@ class ChessCanvas {
       addPossib(row - 2, column + 1, turn, true);
     }
 
-    const boardPossib = (turn, func) => {
-      for (let i = 1; i <= 8; i++) {
+    const addBoardPossib = (turn, func, count = 8) => {
+      for (let i = 1; i <= count; i++) {
         const [rookRow, rookColumn] = func(i);
         if (
           rookRow > 8 ||
@@ -366,54 +366,126 @@ class ChessCanvas {
       }
     }
 
-    const rookPossib = turn => {
-      boardPossib(turn, i => [row + i, column])
-      boardPossib(turn, i => [row - i, column])
-      boardPossib(turn, i => [row, column + i])
-      boardPossib(turn, i => [row, column - i])
+    const addVerticalPossib = (turn, count = 8) => {
+      addBoardPossib(turn, i => [row + i, column], count)
+      addBoardPossib(turn, i => [row - i, column], count)
+      addBoardPossib(turn, i => [row, column + i], count)
+      addBoardPossib(turn, i => [row, column - i], count)
     }
 
-    const bishopPossib = turn => {
-      boardPossib(turn, i => [row + i, column + i])
-      boardPossib(turn, i => [row - i, column + i])
-      boardPossib(turn, i => [row + i, column - i])
-      boardPossib(turn, i => [row - i, column - i])
+    const addDiagonalPossib = (turn, count = 8) => {
+      addBoardPossib(turn, i => [row + i, column + i], count)
+      addBoardPossib(turn, i => [row - i, column + i], count)
+      addBoardPossib(turn, i => [row + i, column - i], count)
+      addBoardPossib(turn, i => [row - i, column - i], count)
+    }
+
+    const kingPossib = (turn) => {
+      addVerticalPossib(turn, 1);
+      addDiagonalPossib(turn, 1);
+      const searchAdversaries = (row, column) => {
+        const searchAdversary = func => {
+          for (let i = 1; i <= 8; i++) {
+            const [rookRow, rookColumn] = func(i);
+            if (
+              rookRow > 8 ||
+              rookRow < 1 ||
+              rookColumn > 8 ||
+              rookColumn < 1
+              ) return;
+            const piece = this.pieces.find(
+              d => d.row === rookRow && d.column === rookColumn
+            )
+            if (piece) return piece.piece.startsWith(turn) ? null : piece;
+          }
+        }
+        return [
+          searchAdversary(i => [row + i, column]),
+          searchAdversary(i => [row - i, column]),
+          searchAdversary(i => [row, column + i]),
+          searchAdversary(i => [row, column - i]),
+          searchAdversary(i => [row + i, column + i]),
+          searchAdversary(i => [row - i, column + i]),
+          searchAdversary(i => [row + i, column - i]),
+          searchAdversary(i => [row - i, column - i]),
+        ].filter(c => c);
+      }
+      
+      const adversaries = []
+
+      for (const p of possibilities) {
+        for (const a of searchAdversaries(p.row, p.column)) {
+          adversaries.push(a);
+        }
+      }
+      for (const data of adversaries) {
+        for (const p of this.getPossibilities(data)) {
+          const i = possibilities.findIndex(d =>
+            d.row === p.row && d.column === p.column
+          )
+          if (i >= 0) {
+            possibilities.splice(i, 1)
+          }
+        }
+      }
     }
 
     switch (piece) {
       case 'whitePawn':
         addPossib(row + 1, column, 'white', false);
-        addPossib(row + 1, column + 1, 'white', true);
-        addPossib(row + 1, column - 1, 'white', true);
+        if (this.findPiece(row + 1, column + 1, 'white')) {
+          addPossib(row + 1, column + 1, 'black', true);
+        }
+        if (this.findPiece(row + 1, column - 1, 'white')) {
+          addPossib(row + 1, column - 1, 'black', true);
+        }
         if (isInitialPosition) {
           addPossib(row + 2, column, 'white', false)
         }
         break;
       case 'blackPawn':
         addPossib(row - 1, column, 'black', false);
-        addPossib(row - 1, column - 1, 'black', true);
-        addPossib(row - 1, column + 1, 'black', true);
+        if (this.findPiece(row -1, column - 1, 'white')) {
+          addPossib(row - 1, column - 1, 'black', true);
+        }
+        if (this.findPiece(row -1, column + 1, 'white')) {
+          addPossib(row - 1, column + 1, 'black', true);
+        }
         if (isInitialPosition) {
           addPossib(row - 2, column, 'black', false);
         }
         break;
       case 'blackKnight':
-        knightPossib('black');
+        addKnightPossib('black');
         break;
       case 'whiteKnight':
-        knightPossib('white');
+        addKnightPossib('white');
         break;
       case 'whiteRook':
-        rookPossib('white');
+        addVerticalPossib('white');
         break;
       case 'blackRook':
-        rookPossib('black');
+        addVerticalPossib('black');
         break;
       case 'blackBishop':
-        bishopPossib('black');
+        addDiagonalPossib('black');
         break;
       case 'whiteBishop':
-        bishopPossib('white');
+        addDiagonalPossib('white');
+        break;
+      case 'blackQueen':
+        addDiagonalPossib('black');
+        addVerticalPossib('black');
+        break;
+      case 'whiteQueen':
+        addDiagonalPossib('white');
+        addVerticalPossib('white');
+        break;
+      case 'blackKing':
+        kingPossib('black');
+        break;
+      case 'whiteKing':
+        kingPossib('white');
         break;
       default:
         break;
@@ -426,6 +498,17 @@ class ChessCanvas {
         c.column <= 8 &&
         c.column >= 1
       )
+  }
+
+  checkCheckmate () {
+    const kings = this.pieces.filter(p => p.piece.toLowerCase().includes('king'));
+    for (const k of kings) {
+      for (const possibilities of this.getPossibilities(k, false)) {
+        if (possibilities.length === 0) {
+          return k
+        }
+      }
+    }
   }
 }
 
