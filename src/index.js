@@ -345,31 +345,39 @@ class ChessCanvas {
       addPossib(row - 2, column + 1, turn, true);
     }
 
-    const rookPossib = (turn) => {
-      const rook = (func) => {
-        for (let i = 1; i <= 8; i++) {
-          const [rookRow, rookColumn] = func(i);
-          if (
-            rookRow > 8 ||
-            rookRow < 1 ||
-            rookColumn > 8 ||
-            rookColumn < 1
-            ) return;
-          const piece = this.pieces.find(
-            d => d.row === rookRow && d.column === rookColumn
-          )
-          if (piece) {
-            if (piece.piece.startsWith(turn)) return;
-            addPossib(rookRow, rookColumn, turn, true);
-            return;
-          }
-          addPossib(rookRow, rookColumn, turn, false);
+    const boardPossib = (turn, func) => {
+      for (let i = 1; i <= 8; i++) {
+        const [rookRow, rookColumn] = func(i);
+        if (
+          rookRow > 8 ||
+          rookRow < 1 ||
+          rookColumn > 8 ||
+          rookColumn < 1
+          ) return;
+        const piece = this.pieces.find(
+          d => d.row === rookRow && d.column === rookColumn
+        )
+        if (piece) {
+          if (piece.piece.startsWith(turn)) return;
+          addPossib(rookRow, rookColumn, turn, true);
+          return;
         }
+        addPossib(rookRow, rookColumn, turn, false);
       }
-      rook(i => [row + i, column])
-      rook(i => [row - i, column])
-      rook(i => [row, column + i])
-      rook(i => [row, column - i])
+    }
+
+    const rookPossib = turn => {
+      boardPossib(turn, i => [row + i, column])
+      boardPossib(turn, i => [row - i, column])
+      boardPossib(turn, i => [row, column + i])
+      boardPossib(turn, i => [row, column - i])
+    }
+
+    const bishopPossib = turn => {
+      boardPossib(turn, i => [row + i, column + i])
+      boardPossib(turn, i => [row - i, column + i])
+      boardPossib(turn, i => [row + i, column - i])
+      boardPossib(turn, i => [row - i, column - i])
     }
 
     switch (piece) {
@@ -400,6 +408,12 @@ class ChessCanvas {
         break;
       case 'blackRook':
         rookPossib('black');
+        break;
+      case 'blackBishop':
+        bishopPossib('black');
+        break;
+      case 'whiteBishop':
+        bishopPossib('white');
         break;
       default:
         break;
