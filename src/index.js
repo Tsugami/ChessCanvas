@@ -46,6 +46,7 @@ class ChessCanvas {
       startColumn: null,
       endColumn: null,
       endRow: null,
+      captured: null,
     }
   }
 
@@ -172,6 +173,7 @@ class ChessCanvas {
         this._getY(row)
       )
     }
+    this._drawLastMovement();
   }
 
   _getPieceImage (piece) {
@@ -212,11 +214,43 @@ class ChessCanvas {
   }
 
   _drawMovement (pieceImage, startRow, startColumn, endRow, endColumn, captured = false) {
-    this._cleanLastMovemnt();
     const color = captured ? this.capturedColor : this.moveColor;
     this._drawSquare(color, this._getX(startColumn), this._getY(startRow));
     this._drawSquare(color, this._getX(endColumn), this._getY(endRow));
     this._drawPiece(pieceImage, this._getX(endColumn), this._getY(endRow));
+  }
+
+  
+  _validateLastMovemnt () {
+    if (
+      !this.lastMovemnt.piece ||
+      !this.lastMovemnt.startRow ||
+      !this.lastMovemnt.startColumn ||
+      !this.lastMovemnt.endRow ||
+      !this.lastMovemnt.endColumn
+      ) return false;
+    return true;
+  }
+
+  _drawLastMovement() {
+    const {
+      piece,
+      startRow,
+      startColumn,
+      endRow,
+      endColumn,
+      captured
+    } = this.lastMovemnt;
+
+    if (!this._validateLastMovemnt()) return;
+    this._drawMovement(
+      this._getPieceImage(piece),
+      startRow,
+      startColumn,
+      endRow,
+      endColumn,
+      captured,
+    )
   }
 
   _cleanLastMovemnt () {
@@ -228,12 +262,8 @@ class ChessCanvas {
       endColumn,
     } = this.lastMovemnt;
 
-    if (
-      !startRow ||
-      !startColumn ||
-      !endRow ||
-      !endColumn
-      ) return;
+    if (!this._validateLastMovemnt()) return;
+
     this._drawSquare(
       this._getSquareColor(startRow, startColumn),
       this._getX(startColumn),
@@ -270,6 +300,7 @@ class ChessCanvas {
       this.turn,
       );
     
+    this._cleanLastMovemnt();
     this._drawMovement(
       this._getPieceImage(piece.piece),
       startRow, startColumn, endRow, endColumn, movement.capture
@@ -281,6 +312,7 @@ class ChessCanvas {
       startColumn,
       endRow,
       endColumn,
+      captured: movement.capture,
     }
 
     this.turn = this.getNextTurn(this.turn);
@@ -288,44 +320,98 @@ class ChessCanvas {
 
   getPossibilities ({ piece, row, column, isInitialPosition }) {
     const possibilities = [];
-    const addPossib = (row, column, capture = false) => {
-      possibilities.push({ row, column, capture });
+    const addPossib = (row, column, turn, capture) => {
+      const x = this.pieces.find(pieceData => 
+        pieceData.row === row &&
+        pieceData.column === column
+      )
+      if (!x) return possibilities.push({ row, column })
+      if (x.piece.startsWith(turn)) return;
+      if (capture) return possibilities.push({ row, column, capture });
+    }
+
+    const knightPossib = (turn) => {
+      // L TOP
+      addPossib(row + 2, column + 1, turn, true);
+      addPossib(row + 2, column - 1, turn, true);
+      // L RIGHT
+      addPossib(row - 1, column + 2, turn, true);
+      addPossib(row + 1, column + 2, turn, true);
+      // L LEFT
+      addPossib(row - 1, column - 2, turn, true);
+      addPossib(row + 1, column - 2, turn, true);
+      // L BACK
+      addPossib(row - 2, column - 1, turn, true);
+      addPossib(row - 2, column + 1, turn, true);
+    }
+
+    const rookPossib = (turn) => {
+      const rook = (func) => {
+        for (let i = 1; i <= 8; i++) {
+          const [rookRow, rookColumn] = func(i);
+          if (
+            rookRow > 8 ||
+            rookRow < 1 ||
+            rookColumn > 8 ||
+            rookColumn < 1
+            ) return;
+          const piece = this.pieces.find(
+            d => d.row === rookRow && d.column === rookColumn
+          )
+          if (piece) {
+            if (piece.piece.startsWith(turn)) return;
+            addPossib(rookRow, rookColumn, turn, true);
+            return;
+          }
+          addPossib(rookRow, rookColumn, turn, false);
+        }
+      }
+      rook(i => [row + i, column])
+      rook(i => [row - i, column])
+      rook(i => [row, column + i])
+      rook(i => [row, column - i])
     }
 
     switch (piece) {
       case 'whitePawn':
-        if (!this.hasPiece(row + 1, column)) {
-          addPossib(row + 1, column);
-        }
-        if (isInitialPosition && !this.hasPiece(row + 2, column)) {
-          addPossib(row + 2, column)
-        }
-        if (this.findPiece(row + 1, column + 1,'black')) {
-          addPossib(row + 1, column + 1, true)
-        }
-        if (this.findPiece(row + 1, column - 1,'black')) {
-          addPossib(row + 1, column + 1, true)
+        addPossib(row + 1, column, 'white', false);
+        addPossib(row + 1, column + 1, 'white', true);
+        addPossib(row + 1, column - 1, 'white', true);
+        if (isInitialPosition) {
+          addPossib(row + 2, column, 'white', false)
         }
         break;
       case 'blackPawn':
-        if (!this.hasPiece(row - 1, column)) {
-          addPossib(row - 1, column);
+        addPossib(row - 1, column, 'black', false);
+        addPossib(row - 1, column - 1, 'black', true);
+        addPossib(row - 1, column + 1, 'black', true);
+        if (isInitialPosition) {
+          addPossib(row - 2, column, 'black', false);
         }
-        if (isInitialPosition && !this.hasPiece(row - 2, column)) {
-          addPossib(row - 2, column)
-        }
-        if (this.findPiece(row - 1, column - 1, 'white')) {
-          addPossib(row - 1, column - 1, true)
-        }
-        if (this.findPiece(row - 1, column + 1, 'white')) {
-          addPossib(row - 1, column + 1, true)
-        }
+        break;
+      case 'blackKnight':
+        knightPossib('black');
+        break;
+      case 'whiteKnight':
+        knightPossib('white');
+        break;
+      case 'whiteRook':
+        rookPossib('white');
+        break;
+      case 'blackRook':
+        rookPossib('black');
         break;
       default:
         break;
     }
 
-    return possibilities;
+    return possibilities
+      .filter(c =>
+        c.row <= 8 &&
+        c.row >= 1 &&
+        c.column <= 8 &&
+        c.column >= 1
+      )
   }
 }
 
