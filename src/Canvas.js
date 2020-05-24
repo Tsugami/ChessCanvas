@@ -127,7 +127,11 @@ class Canvas {
     const color = captured ? this.capturedColor : this.moveColor;
     this.drawSquare(color, this.getX(startColumn), this.getY(startRow));
     this.drawSquare(color, this.getX(endColumn), this.getY(endRow));
-    this.drawPiece(this.images[piece.name], this.getX(endColumn), this.getY(endRow));
+    this.drawPiece(this.getPieceImage(piece), this.getX(endColumn), this.getY(endRow));
+  }
+
+  getPieceImage(piece) {
+    return this.images[piece.name]
   }
 
   cleanLastMovemnt () {

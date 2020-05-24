@@ -1,18 +1,24 @@
+const Movement = require('../Movement');
+
 class Piece {
-  constructor (piece, team, initialRow, initialColumn) {
+  constructor (type, side, initialRow, initialColumn) {
     this.row = initialRow;
     this.column = initialColumn;
-    this.piece = piece;
-    this.team = team;
+    this.type = type;
+    this.side = side;
     this.isInitialPosition = true;
   }
 
   get name () {
-    return `${this.team}${this.piece[0].toUpperCase()}${this.piece.slice(1)}`;
+    return `${this.side}${this.type[0].toUpperCase()}${this.type.slice(1)}`;
   }
 
-  isAdversary (team) {
-    return team !== team;
+  isAdversary (side) {
+    return side !== this.side;
+  }
+
+  getMovement (board) {
+    return Movement[this.type](board, this);
   }
 }
 

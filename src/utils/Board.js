@@ -1,24 +1,24 @@
 const Piece = require('./Piece');
-const { PIECES, TEAMS } = require('./constants');
+const { PieceType, SideType } = require('./constants');
 
 class Board extends Array {
   build () {
-    this._addInitialPieces(TEAMS.WHITE, 2, 1);
-    this._addInitialPieces(TEAMS.BLACK, 7, 8);
+    this._addInitialPieceType(SideType.WHITE, 2, 1);
+    this._addInitialPieceType(SideType.BLACK, 7, 8);
   }
 
-  _addInitialPieces (team, frontline, backline) {
+  _addInitialPieceType (team, frontline, backline) {
     for (let column = 0; column <= 8; column++) {
-      super.push(new Piece(PIECES.PAWN, team, frontline, column));
+      super.push(new Piece(PieceType.PAWN, team, frontline, column));
     }
-    super.push(new Piece(PIECES.ROOK, team, backline, 1));
-    super.push(new Piece(PIECES.ROOK, team, backline, 8));
-    super.push(new Piece(PIECES.BISHOP, team, backline, 3));
-    super.push(new Piece(PIECES.BISHOP, team, backline, 6));
-    super.push(new Piece(PIECES.KNIGHT, team, backline, 2));
-    super.push(new Piece(PIECES.KNIGHT, team, backline, 7));
-    super.push(new Piece(PIECES.KING, team, backline, 4));
-    super.push(new Piece(PIECES.QUEEN, team, backline, 5));
+    super.push(new Piece(PieceType.ROOK, team, backline, 1));
+    super.push(new Piece(PieceType.ROOK, team, backline, 8));
+    super.push(new Piece(PieceType.BISHOP, team, backline, 3));
+    super.push(new Piece(PieceType.BISHOP, team, backline, 6));
+    super.push(new Piece(PieceType.KNIGHT, team, backline, 2));
+    super.push(new Piece(PieceType.KNIGHT, team, backline, 7));
+    super.push(new Piece(PieceType.KING, team, backline, 4));
+    super.push(new Piece(PieceType.QUEEN, team, backline, 5));
   }
 
   move (startRow, startColumn, endRow, endColumn) {
