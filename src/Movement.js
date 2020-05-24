@@ -41,7 +41,7 @@ class Movement {
     const piece = board.find(row, column);
     if (!piece) {
       result.stop = false;
-    } else if (piece.isAdversary(side)) {
+    } else if (piece.adversary === side) {
       result.stop = true;
       result.data.piece = piece;
       result.data.capture = true;
@@ -205,46 +205,56 @@ class Movement {
 
   static [PieceType.KING] (board, piece) {
     const result = Movement.all(board, piece, 1);
-    for (const i in result) {
-      const validate = (arr, types) => {
-        const r = arr
-          .filter(data => data.piece)
-          .some(data => types.includes(data.piece.type))
-        return r;
-      }
-      if (validate(Movement[PieceType.ROOK](board, result[i]), [PieceType.ROOK, PieceType.QUEEN])) {
-        result.splice(i, 1);
-        continue;
-      }
-      if (validate(Movement[PieceType.BISHOP](board, result[i]), [PieceType.BISHOP, PieceType.QUEEN])) {
-        result.splice(i, 1);
-        continue;
-      }
-      if (validate(Movement[PieceType.KNIGHT](board, result[i]), [PieceType.KNIGHT])) {
-        result.splice(i, 1);
-        continue;
-      }
-      if (piece.side === SideType.BLACK) {
-        if (validate(Movement.aboveLeft(board, result[i], 1), [PieceType.PAWN])) {
-          result.splice(i, 1);
-          continue;
-        }
-        if (validate(Movement.aboveRight(board, result[i], 1), [PieceType.PAWN])) {
-          result.splice(i, 1);
-          continue;
-        }
-      } else {
-        if (validate(Movement.belowLeft(board, result[i], 1), [PieceType.PAWN])) {
-          result.splice(i, 1);
-          continue;
-        }
-        if (validate(Movement.belowRight(board, result[i], 1), [PieceType.PAWN])) {
-          result.splice(i, 1);
-          continue;
-        }
+    const block = [];
+    for (const piece of result) {
+      if (Movement.findCapturePiece(board, piece)) {
+        block.push(piece)
       }
     }
-    return result;
+    return result.filter(r => !block.some(board.findHandle(r.row, r.column)));
+  }
+
+  static findCapturePiece (board, piece) {
+    const findPiece = (arr, types) => {
+      return arr
+        .filter(data => data.piece)
+        .find(data => types.includes(data.piece.type))
+    }
+    const cross = findPiece(Movement[PieceType.ROOK](board, piece), [PieceType.ROOK, PieceType.QUEEN])
+    if (cross) {
+      return cross
+    }
+    const diagonalCross = findPiece(Movement[PieceType.BISHOP](board, piece), [PieceType.BISHOP, PieceType.QUEEN])
+    if (diagonalCross) {
+      return diagonalCross;
+    }
+
+    const knight = findPiece(Movement[PieceType.KNIGHT](board, piece), [PieceType.KNIGHT])
+    if (knight) {
+      return knight;
+    }
+
+    if (piece.side === SideType.BLACK) {
+      const aboveLeft = findPiece(Movement.aboveLeft(board, piece, 1), [PieceType.PAWN])
+      if (aboveLeft) {
+        return aboveLeft;
+      }
+      const aboveRight = findPiece(Movement.aboveRight(board, piece, 1), [PieceType.PAWN])
+      if (aboveRight) {
+        return aboveRight;
+      }
+    } else {
+      const aboveLeft = findPiece(Movement.belowLeft(board, piece, 1), [PieceType.PAWN])
+      if (aboveLeft) {
+        return aboveLeft;
+      }
+      const belowRight = findPiece(Movement.belowRight(board, piece, 1), [PieceType.PAWN]);
+      if (belowRight) {
+        return belowRight;
+      }
+    }
+    const king = findPiece(Movement.all(board, piece, 1), [PieceType.KING]);
+    return king;
   }
 }
 

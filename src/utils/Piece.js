@@ -1,5 +1,5 @@
 const Movement = require('../Movement');
-
+const { SideType } = require('./constants');
 class Piece {
   constructor (type, side, initialRow, initialColumn) {
     this.row = initialRow;
@@ -13,8 +13,8 @@ class Piece {
     return `${this.side}${this.type[0].toUpperCase()}${this.type.slice(1)}`;
   }
 
-  isAdversary (side) {
-    return side !== this.side;
+  get adversary () {
+    return this.side === SideType.BLACK ? SideType.WHITE : SideType.BLACK;
   }
 
   getMovement (board) {

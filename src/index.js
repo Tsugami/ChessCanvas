@@ -7,21 +7,25 @@ class ChessCanvas {
   constructor (initialTurn = SideType.WHITE, canvasOptions) {
     this.turn = initialTurn;
     this.board = new Board();
-    this.canvas = new Canvas(canvasOptions);
+    this._canvas = new Canvas(canvasOptions);
     this.lastMovemnt = null;
   }
 
   getNextTurn (turn = this.turn) {
     return turn ===  SideType.WHITE ? SideType.WHITE : SideType.BLACK; 
-  } 
+  }
+
+  getCanvas () {
+    return this._canvas._canvas;
+  }
 
   async init () {
     this.board.build();
-    await this.canvas.init(this.board);
+    await this._canvas.init(this.board);
   }
 
   render () {
-    return this.canvas.render(this.board, this.lastMovemnt);
+    return this._canvas.render(this.board, this.lastMovemnt);
   }
 
   _setLastMovement (
@@ -57,14 +61,14 @@ class ChessCanvas {
 
     if (!movement) throw new Error(Errors.invalidMovement);
 
-    const {captured } = this.board.move(
+    const { captured } = this.board.move(
       startRow,
       startColumn,
       endRow,
       endColumn,
     );
     
-    this.canvas.drawMovement({
+    this._canvas.drawMovement({
       piece,
       startRow,
       startColumn,
@@ -88,12 +92,24 @@ class ChessCanvas {
   checkCheckmate () {
     const kings = this.board.filter(p => p.type === PieceType.KING);
     for (const king of kings) {
-      for (const possibilities of king.getMovement(this.board)) {
-        if (possibilities.length === 0) {
-          return k
+      king.side = king.adversary;
+      const allies = Movement.all(this.board, king, 1).filter(p => p.piece);
+      if (allies.length > 0) {
+        break;
+      }
+      king.side = king.adversary;
+      for (const adversary of Movement.all(this.board, king, 1)) {
+        const piece = Movement.findCapturePiece(this.board, adversary);
+        if (piece) {
+          const canBeCapture = Movement.findCapturePiece(this.board, piece.piece);
+          if (canBeCapture) {
+            return false;
+          }
         }
       }
+      return king;
     }
+    return false;
   }
 }
 
