@@ -1,4 +1,6 @@
 const path = require('path');
+const { SideType, PieceType } = require('./utils/constants');
+
 const { createCanvas, loadImage } = require('canvas');
 class Canvas {
   constructor ({
@@ -48,18 +50,22 @@ class Canvas {
 
   async loadPieceImages () {
     this._images = {
-      blackBishop: await loadImage(path.join(__dirname, 'assets', 'bb.svg')),
-      blackKing: await loadImage(path.join(__dirname, 'assets', 'bk.svg')),
-      blackKnight: await loadImage(path.join(__dirname, 'assets', 'bn.svg')),
-      blackPawn: await loadImage(path.join(__dirname, 'assets', 'bp.svg')),
-      blackQueen: await loadImage(path.join(__dirname, 'assets', 'bq.svg')),
-      blackRook: await loadImage(path.join(__dirname, 'assets', 'br.svg')),
-      whiteBishop: await loadImage(path.join(__dirname, 'assets', 'wb.svg')),
-      whiteKing: await loadImage(path.join(__dirname, 'assets', 'wk.svg')),
-      whiteKnight: await loadImage(path.join(__dirname, 'assets', 'wn.svg')),
-      whitePawn: await loadImage(path.join(__dirname, 'assets', 'wp.svg')),
-      whiteQueen: await loadImage(path.join(__dirname, 'assets', 'wq.svg')),
-      whiteRook: await loadImage(path.join(__dirname, 'assets', 'wr.svg')),
+      [SideType.BLACK]: {
+        [PieceType.BISHOP]: await loadImage(path.join(__dirname, 'assets', 'bb.svg')),
+        [PieceType.KING]: await loadImage(path.join(__dirname, 'assets', 'bk.svg')),
+        [PieceType.KNIGHT]: await loadImage(path.join(__dirname, 'assets', 'bn.svg')),
+        [PieceType.PAWN]: await loadImage(path.join(__dirname, 'assets', 'bp.svg')),
+        [PieceType.QUEEN]: await loadImage(path.join(__dirname, 'assets', 'bq.svg')),
+        [PieceType.ROOK]: await loadImage(path.join(__dirname, 'assets', 'br.svg')),
+      },
+      [SideType.WHITE]: {
+        [PieceType.BISHOP]: await loadImage(path.join(__dirname, 'assets', 'wb.svg')),
+        [PieceType.KING]: await loadImage(path.join(__dirname, 'assets', 'wk.svg')),
+        [PieceType.KNIGHT]: await loadImage(path.join(__dirname, 'assets', 'wn.svg')),
+        [PieceType.PAWN]: await loadImage(path.join(__dirname, 'assets', 'wp.svg')),
+        [PieceType.QUEEN]: await loadImage(path.join(__dirname, 'assets', 'wq.svg')),
+        [PieceType.ROOK]: await loadImage(path.join(__dirname, 'assets', 'wr.svg')),
+      },
     }
   }
 
@@ -101,7 +107,7 @@ class Canvas {
   drawPieces (pieces) {
     for (const piece of pieces) {
       this.drawPiece(
-        this.images[piece.name],
+        this.getPieceImage(piece),
         this.getX(piece.column),
         this.getY(piece.row)
       )
@@ -131,7 +137,7 @@ class Canvas {
   }
 
   getPieceImage(piece) {
-    return this.images[piece.name]
+    return this.images[piece.side][piece.type]
   }
 
   cleanLastMovemnt () {
