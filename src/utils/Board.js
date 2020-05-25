@@ -21,19 +21,6 @@ class Board extends Array {
     super.push(new Piece(PieceType.QUEEN, team, backline, 5));
   }
 
-  move (startRow, startColumn, endRow, endColumn) {
-    const piece = this.find(startRow, startColumn);
-    if (!piece) return;
-
-    const captured =  this.capture(endRow, endColumn);
-    
-    piece.row = endRow;
-    piece.column = endColumn;
-    piece.isInitialPosition = false;
-    
-    return { captured }
-  }
-
   capture (row, column) {
     const capturedIndex = this.findIndex(this.findHandle(row, column));
     if (capturedIndex >= 0) {

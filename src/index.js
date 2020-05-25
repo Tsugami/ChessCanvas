@@ -46,7 +46,25 @@ class ChessCanvas {
     }
   }
 
-  move (startRow, startColumn, endRow, endColumn) {
+  validatePawnSwap (swap) {
+    return Object.values(PieceType)
+      .filter(p => p !== PieceType.PAWN)
+      .includes(swap)
+  }
+
+  isPawnSwap (piece, row) {
+    if (piece.type === PieceType.PAWN) {
+      if (piece.side === SideType.BLACK && row === 1) return true;
+      if (piece.side === SideType.WHITE && row === 8) return true;
+    }
+    return false;
+  }
+
+  move (startRow, startColumn, endRow, endColumn, pawnSwap = PieceType.QUEEN) {
+    if (!this.validatePawnSwap(pawnSwap)) {
+      throw new Error(Errors.PAWN_SWAP)
+    }
+
     const piece = this.board.find(startRow, startColumn);
 
     if (!piece) {
@@ -61,13 +79,16 @@ class ChessCanvas {
 
     if (!movement) throw new Error(Errors.invalidMovement);
 
-    const { captured } = this.board.move(
-      startRow,
-      startColumn,
-      endRow,
-      endColumn,
-    );
-    
+    const captured = this.board.capture(endRow, endColumn);
+
+    piece.row = endRow;
+    piece.column = endColumn;
+    piece.isInitialPosition = false;
+
+    if (this.isPawnSwap(piece, endRow)) {
+      piece.type = pawnSwap;
+    }
+
     this._canvas.drawMovement({
       piece,
       startRow,
