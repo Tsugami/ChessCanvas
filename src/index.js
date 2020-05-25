@@ -114,6 +114,9 @@ class ChessCanvas {
     const kings = this.board.filter(p => p.type === PieceType.KING);
     for (const king of kings) {
       king.side = king.adversary;
+      if (king.getMovement(this.board).length > 0) {
+        break;
+      } 
       const allies = Movement.all(this.board, king, 1).filter(p => p.piece);
       if (allies.length > 0) {
         break;
