@@ -211,22 +211,26 @@ class Movement {
       return data;
     }
 
-    const copyLeft = Object.assign({}, piece);;
-    copyLeft.side = piece.adversary;
-    copyLeft.column -= 1; 
-    const left = Movement.left(board, copyLeft, 8);
-    const lastLeft = left.pop();
-    if (lastLeft && isRook(lastLeft)) {
-      result.push(...left.slice(0, 1).map(addHookData(lastLeft)));
+    if (!board.has(piece.row, piece.column - 1)) {
+      const copyLeft = Object.assign({}, piece);;
+      copyLeft.side = piece.adversary;
+      copyLeft.column -= 1; 
+      const left = Movement.left(board, copyLeft, 8);
+      const lastLeft = left.pop();
+      if (lastLeft && isRook(lastLeft)) {
+        result.push(...left.slice(0, 1).map(addHookData(lastLeft)));
+      }
     }
 
-    const copyRight = Object.assign({}, piece);
-    copyRight.side = piece.adversary;
-    copyRight.column += 1; 
-    const right = Movement.right(board, copyRight, 8);
-    const lastRight = right.pop();
-    if (lastRight && isRook(lastRight)) {
-      result.push(...right.slice(0, 1).map(addHookData(lastRight)));
+    if (!board.has(piece.row, piece.column + 1)) {
+      const copyRight = Object.assign({}, piece);
+      copyRight.side = piece.adversary;
+      copyRight.column += 1; 
+      const right = Movement.right(board, copyRight, 8);
+      const lastRight = right.pop();
+      if (lastRight && isRook(lastRight)) {
+        result.push(...right.slice(0, 1).map(addHookData(lastRight)));
+      }
     }
 
     return result.map(data => {
