@@ -1,5 +1,5 @@
 const Piece = require('./Piece');
-const { PieceType, SideType } = require('./constants');
+const { PieceType, SideType } = require('./Constants');
 
 class Board extends Array {
   build () {

@@ -1,6 +1,6 @@
 const Canvas = require('./Canvas');
-const Board = require('./utils/Board');
-const { SideType, PieceType, Errors } = require('./utils/constants');
+const Board = require('./Board');
+const { SideType, PieceType, Errors } = require('./Constants');
 const Movement = require('./Movement');
 
 class ChessCanvas {

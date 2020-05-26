@@ -1,4 +1,4 @@
-const { PieceType, SideType } = require('./utils/constants');
+const { PieceType, SideType } = require('./Constants');
 
 class Movement {
   static createSquareData ({

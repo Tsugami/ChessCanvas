@@ -1,5 +1,5 @@
 const path = require('path');
-const { SideType, PieceType } = require('./utils/constants');
+const { SideType, PieceType } = require('./Constants');
 
 const { createCanvas, loadImage } = require('canvas');
 class Canvas {

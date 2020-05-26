@@ -1,5 +1,5 @@
-const Movement = require('../Movement');
-const { SideType } = require('./constants');
+const Movement = require('./Movement');
+const { SideType } = require('./Constants');
 class Piece {
   constructor (type, side, initialRow, initialColumn) {
     this.row = initialRow;
