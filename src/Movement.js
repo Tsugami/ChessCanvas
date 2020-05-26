@@ -37,7 +37,6 @@ class Movement {
       },
       stop: false,
     };
-
     const piece = board.find(row, column);
     if (!piece) {
       result.stop = false;
@@ -192,19 +191,56 @@ class Movement {
 
  static [PieceType.KNIGHT] (board, piece) {
   return [
-    this.knightAboveLeft(board, piece),
-    this.knightAboveRight(board, piece),
-    this.knightBelowLeft(board, piece),
-    this.knightBelowRight(board, piece),
-    this.knightLeftAbove(board, piece),
-    this.knightLeftBelow(board, piece),
-    this.knightRightAbove(board, piece),
-    this.knightRightBelow(board, piece),
+    Movement.knightAboveLeft(board, piece),
+    Movement.knightAboveRight(board, piece),
+    Movement.knightBelowLeft(board, piece),
+    Movement.knightBelowRight(board, piece),
+    Movement.knightLeftAbove(board, piece),
+    Movement.knightLeftBelow(board, piece),
+    Movement.knightRightAbove(board, piece),
+    Movement.knightRightBelow(board, piece),
   ].filter(data => data);
   }
 
+  static hook (board, piece) {
+    const result = [];
+
+    const isRook = data => data.piece && data.piece.type === PieceType.ROOK;
+    const addHookData = rook => data => {
+      data.hookData = rook.piece;
+      return data;
+    }
+
+    const copyLeft = Object.assign({}, piece);;
+    copyLeft.side = piece.adversary;
+    copyLeft.column -= 1; 
+    const left = Movement.left(board, copyLeft, 8);
+    const lastLeft = left.pop();
+    if (lastLeft && isRook(lastLeft)) {
+      result.push(...left.slice(0, 1).map(addHookData(lastLeft)));
+    }
+
+    const copyRight = Object.assign({}, piece);
+    copyRight.side = piece.adversary;
+    copyRight.column += 1; 
+    const right = Movement.right(board, copyRight, 8);
+    const lastRight = right.pop();
+    if (lastRight && isRook(lastRight)) {
+      result.push(...right.slice(0, 1).map(addHookData(lastRight)));
+    }
+
+    return result.map(data => {
+      data.side = piece.side;
+      return data;
+    });
+  }
+
   static [PieceType.KING] (board, piece) {
-    const result = Movement.all(board, piece, 1);
+    const result = [
+      ...Movement.all(board, piece, 1),
+      ...Movement.hook(board, piece),
+    ]
+
     const block = [];
     for (const piece of result) {
       if (Movement.findCapturePiece(board, piece)) {

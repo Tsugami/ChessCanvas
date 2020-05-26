@@ -60,7 +60,7 @@ class ChessCanvas {
     return false;
   }
 
-  move (startRow, startColumn, endRow, endColumn, pawnSwap = PieceType.QUEEN) {
+  move (startRow, startColumn, endRow, endColumn, { hook = true, pawnSwap = PieceType.QUEEN } = {}) {
     if (!this.validatePawnSwap(pawnSwap)) {
       throw new Error(Errors.PAWN_SWAP)
     }
@@ -80,10 +80,15 @@ class ChessCanvas {
     if (!movement) throw new Error(Errors.invalidMovement);
 
     const captured = this.board.capture(endRow, endColumn);
-
+    
     piece.row = endRow;
     piece.column = endColumn;
     piece.isInitialPosition = false;
+    
+    if (movement.hookData && hook) {
+      const rook = this.board.find(movement.hookData.row, movement.hookData.column);
+      rook.column = endColumn > startColumn ? endColumn - 1 : endColumn + 1;
+    }
 
     if (this.isPawnSwap(piece, endRow)) {
       piece.type = pawnSwap;
